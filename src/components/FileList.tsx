@@ -6,7 +6,7 @@ type FileListProps = {
     author?: string;
     fileUrl: string;
   }[];
-  onSelectVideo: (video: any) => void;
+  onSelectVideo: (video: unknown) => void;
 };
 
 export const FileList = ({ videoFiles, onSelectVideo }: FileListProps) => {

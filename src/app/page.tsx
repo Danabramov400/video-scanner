@@ -31,7 +31,8 @@ export default function Home() {
       async function traverseDirectory(dirHandle: FileSystemDirectoryHandle) {
         for await (const entry of dirHandle.values()) {
           if (entry.kind === "file" && entry.name.match(/\.(mp4|mkv|avi|mov|webm)$/i)) {
-            const file = await entry.getFile();
+            const fileHandle = entry as FileSystemFileHandle;
+            const file = await fileHandle.getFile(); // 调用 getFile() 方法
             const url = URL.createObjectURL(file);
             const createdAt = file.lastModified
               ? new Date(file.lastModified).toLocaleString()
@@ -83,7 +84,7 @@ export default function Home() {
         </button>
         <FileList
           videoFiles={videoFiles}
-          onSelectVideo={(video) => setSelectedVideo(video)}
+          onSelectVideo={(video) => setSelectedVideo(video as VideoFile)}
         />
       </aside>
 
