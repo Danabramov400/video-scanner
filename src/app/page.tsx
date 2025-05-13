@@ -1,103 +1,100 @@
-import Image from "next/image";
+'use client'
+
+import { useState } from "react";
+import { FileList } from "@/components/FileList";
+import { VideoPlayer } from "@/components/VideoPlayer";
+
+type VideoFile = {
+  name: string;
+  duration: number;
+  createdAt?: string;
+  author?: string;
+  fileUrl: string;
+};
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [videoFiles, setVideoFiles] = useState<VideoFile[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<VideoFile | null>(null);
+  const [loading, setLoading] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+  const handleDirectoryPicker = async () => {
+    try {
+      if (!window.showDirectoryPicker) {
+        alert("您的浏览器不支持文件夹选择功能！");
+        return;
+      }
+
+      setLoading(true);
+      const dirHandle = await window.showDirectoryPicker();
+      const files: VideoFile[] = [];
+
+      async function traverseDirectory(dirHandle: FileSystemDirectoryHandle) {
+        for await (const entry of dirHandle.values()) {
+          if (entry.kind === "file" && entry.name.match(/\.(mp4|mkv|avi|mov|webm)$/i)) {
+            const file = await entry.getFile();
+            const url = URL.createObjectURL(file);
+            const createdAt = file.lastModified
+              ? new Date(file.lastModified).toLocaleString()
+              : "未知";
+            const author = file.name.includes("作者") ? "未知作者" : "未知";
+
+            // 使用 <video> 标签获取视频时长
+            await new Promise<void>((resolve) => {
+              const video = document.createElement("video");
+              video.src = url;
+              video.addEventListener("loadedmetadata", () => {
+                files.push({
+                  name: file.name,
+                  duration: video.duration,
+                  createdAt,
+                  author,
+                  fileUrl: url,
+                });
+                resolve();
+              });
+            });
+          } else if (entry.kind === "directory") {
+            await traverseDirectory(entry as FileSystemDirectoryHandle);
+          }
+        }
+      }
+
+      await traverseDirectory(dirHandle);
+      setVideoFiles(files);
+    } catch (error) {
+      console.error("Error reading directory:", error);
+      alert("读取目录时发生错误！");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex bg-gray-100">
+      {/* 左侧视频文件列表 */}
+      <aside className="w-1/4 bg-white shadow-lg p-4 overflow-y-auto">
+        <h2 className="text-lg font-bold text-gray-800 mb-4">视频文件列表</h2>
+        <button
+          onClick={handleDirectoryPicker}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none w-full mb-4"
+          disabled={loading}
+        >
+          {loading ? "处理中..." : "选择文件夹"}
+        </button>
+        <FileList
+          videoFiles={videoFiles}
+          onSelectVideo={(video) => setSelectedVideo(video)}
+        />
+      </aside>
+
+      {/* 中间视频播放器 */}
+      <main className="flex-1 flex items-center justify-center p-6 bg-gray-50">
+        {selectedVideo ? (
+          <VideoPlayer video={selectedVideo} />
+        ) : (
+          <p className="text-gray-500">请选择一个视频文件进行播放。</p>
+        )}
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
