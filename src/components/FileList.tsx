@@ -5,8 +5,11 @@ type FileListProps = {
     createdAt?: string;
     author?: string;
     fileUrl: string;
+    size: number;
+    format: string;
+    thumbnailUrl: string;
   }[];
-  onSelectVideo: (video: unknown) => void;
+  onSelectVideo: (video: any) => void;
 };
 
 export const FileList = ({ videoFiles, onSelectVideo }: FileListProps) => {
@@ -15,14 +18,29 @@ export const FileList = ({ videoFiles, onSelectVideo }: FileListProps) => {
       {videoFiles.map((file, index) => (
         <li
           key={index}
-          className="p-4 bg-gray-100 rounded-lg shadow cursor-pointer hover:bg-gray-200 transition"
+          className="p-4 bg-gray-100 rounded-lg shadow cursor-pointer hover:bg-gray-200 transition flex items-center"
           onClick={() => onSelectVideo(file)}
         >
-          <h3 className="text-gray-800 font-semibold">{file.name}</h3>
-          <div className="text-sm text-gray-600 mt-2">
-            <span className="block">时长: {file.duration.toFixed(2)} 秒</span>
-            <span className="block">创建时间: {file.createdAt || "未知"}</span>
-            <span className="block">作者: {file.author || "未知"}</span>
+          {/* 视频预览图 */}
+          <img
+            src={file.thumbnailUrl}
+            alt={file.name}
+            className="w-16 h-16 rounded-lg object-cover mr-4"
+          />
+          {/* 视频信息 */}
+          <div className="flex-1">
+            <h3 className="text-gray-800 font-semibold">{file.name}</h3>
+            <div className="text-sm text-gray-600 mt-2">
+              <span className="block">格式: {file.format}</span>
+              <span className="block">时长: {file.duration.toFixed(2)} 秒</span>
+              <span className="block">
+                大小: {(file.size / (1024 * 1024)).toFixed(2)} MB
+              </span>
+              <span className="block">
+                创建时间: {file.createdAt || "未知"}
+              </span>
+              <span className="block">作者: {file.author || "未知"}</span>
+            </div>
           </div>
         </li>
       ))}
