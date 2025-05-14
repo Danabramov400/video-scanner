@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 type FileListProps = {
   videoFiles: {
     name: string;
@@ -9,7 +11,7 @@ type FileListProps = {
     format: string;
     thumbnailUrl: string;
   }[];
-  onSelectVideo: (video: any) => void;
+  onSelectVideo: (video: unknown) => void;
 };
 
 export const FileList = ({ videoFiles, onSelectVideo }: FileListProps) => {
@@ -22,7 +24,7 @@ export const FileList = ({ videoFiles, onSelectVideo }: FileListProps) => {
           onClick={() => onSelectVideo(file)}
         >
           {/* 视频预览图 */}
-          <img
+          <Image
             src={file.thumbnailUrl}
             alt={file.name}
             className="w-16 h-16 rounded-lg object-cover mr-4"
