@@ -27,6 +27,8 @@ export const FileList = ({ videoFiles, onSelectVideo }: FileListProps) => {
           <Image
             src={file.thumbnailUrl}
             alt={file.name}
+            width={320}
+            height={180}
             className="w-16 h-16 rounded-lg object-cover mr-4"
           />
           {/* 视频信息 */}

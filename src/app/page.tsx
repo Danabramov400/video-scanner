@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileList } from "@/components/FileList";
 import { VideoPlayer } from "@/components/VideoPlayer";
 
@@ -19,6 +19,33 @@ export default function Home() {
   const [videoFiles, setVideoFiles] = useState<VideoFile[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<VideoFile | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isLooping, setIsLooping] = useState(false);
+
+  useEffect(() => {
+    let videoElement: HTMLVideoElement | null = null;
+
+    if (isLooping && videoFiles.length > 0) {
+      let currentIndex = videoFiles.findIndex(
+        (video) => video.fileUrl === selectedVideo?.fileUrl
+      );
+
+      const handleVideoEnd = () => {
+        currentIndex = (currentIndex + 1) % videoFiles.length;
+        setSelectedVideo(videoFiles[currentIndex]);
+      };
+
+      videoElement = document.querySelector("video");
+      if (videoElement) {
+        videoElement.addEventListener("ended", handleVideoEnd);
+      }
+
+      return () => {
+        if (videoElement) {
+          videoElement.removeEventListener("ended", handleVideoEnd);
+        }
+      };
+    }
+  }, [isLooping, videoFiles, selectedVideo]);
 
   const handleDirectoryPicker = async () => {
     try {
@@ -96,6 +123,10 @@ export default function Home() {
     });
   };
 
+  const handleLoopVideos = () => {
+    setIsLooping((prev) => !prev);
+  };
+
   return (
     <div className="min-h-screen flex bg-gray-100">
       {/* 左侧视频文件列表 */}
@@ -109,6 +140,14 @@ export default function Home() {
           disabled={loading}
         >
           {loading ? "处理中..." : "选择文件夹"}
+        </button>
+        <button
+          onClick={handleLoopVideos}
+          className={`${
+            isLooping ? "bg-red-500" : "bg-green-500"
+          } text-white px-4 py-2 rounded hover:bg-opacity-80 focus:outline-none w-full mb-4`}
+        >
+          {isLooping ? "停止循环播放" : "循环播放所有视频"}
         </button>
         <FileList
           videoFiles={videoFiles}
